@@ -1,5 +1,5 @@
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub struct Version {
@@ -21,12 +21,9 @@ impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
-
 }
 
-impl Error for ParseError {
-
-}
+impl Error for ParseError {}
 
 pub fn parse(input: &str) -> Result<Version> {
     let rest = input;
@@ -53,11 +50,25 @@ pub fn parse(input: &str) -> Result<Version> {
 }
 
 fn parse_number(rest: &str) -> Result<(u64, &str)> {
-    if &rest[0..1] != "." {
-        return Ok((rest[0..1].parse().unwrap(), &rest[1..]));
+    // figure out how many numbers we have
+
+    let mut non_digit_index = rest.len();
+
+    for (index, c) in rest.bytes().enumerate() {
+        match c {
+            b'0' | b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' => (),
+            _ => {
+                non_digit_index = index;
+                break;
+            }
+        }
     }
 
-    Err(ParseError::NotAVersion)
+    let num = rest[..non_digit_index]
+        .parse()
+        .or(Err(ParseError::NotAVersion))?;
+
+    Ok((num, &rest[non_digit_index..]))
 }
 
 fn parse_dot(rest: &str) -> Result<&str> {
@@ -67,8 +78,6 @@ fn parse_dot(rest: &str) -> Result<&str> {
 
     Err(ParseError::ExpectedDot)
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -81,6 +90,8 @@ mod tests {
         assert_eq!(parse("1.2.3").unwrap().major, 1);
         assert_eq!(parse("1.2.3").unwrap().minor, 2);
         assert_eq!(parse("1.2.3").unwrap().patch, 3);
+
+        assert_eq!(parse("11.22.33").unwrap().patch, 33);
     }
 
     #[test]
