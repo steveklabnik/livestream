@@ -19,6 +19,8 @@ pub enum ParseError {
     NotAVersion,
     ExtraInput,
     ExpectedDot,
+    LeadingZero,
+    EmptyString,
 }
 
 impl fmt::Display for ParseError {
@@ -31,6 +33,10 @@ impl fmt::Display for ParseError {
 impl Error for ParseError {}
 
 pub fn parse(input: &str) -> Result<Version> {
+    if input.is_empty() {
+        return Err(ParseError::EmptyString);
+    }
+
     let rest = input;
 
     let (major, rest) = parse_number(rest)?;
@@ -57,6 +63,10 @@ pub fn parse(input: &str) -> Result<Version> {
 fn parse_number(rest: &str) -> Result<(u64, &str)> {
     let mut non_digit_index = rest.len();
 
+    if rest.starts_with("0") {
+        return Err(ParseError::LeadingZero);
+    }
+
     for (index, c) in rest.bytes().enumerate() {
         if !matches!(c, b'0'..=b'9') {
             non_digit_index = index;
@@ -72,7 +82,7 @@ fn parse_number(rest: &str) -> Result<(u64, &str)> {
 }
 
 fn parse_dot(rest: &str) -> Result<&str> {
-    if &rest[0..1] == "." {
+    if rest.starts_with(".") {
         return Ok(&rest[1..]);
     }
 
@@ -103,5 +113,15 @@ mod tests {
     fn couldnt_parse_version() {
         assert_eq!(parse(".2.3"), Err(ParseError::NotAVersion));
         assert_eq!(parse("1..3"), Err(ParseError::NotAVersion));
+    }
+
+    #[test]
+    fn no_leading_zeroes() {
+        assert_eq!(parse("01.2.3"), Err(ParseError::LeadingZero));
+    }
+
+    #[test]
+    fn empty_string() {
+        assert_eq!(parse(""), Err(ParseError::EmptyString));
     }
 }
