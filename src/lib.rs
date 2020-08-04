@@ -55,17 +55,12 @@ pub fn parse(input: &str) -> Result<Version> {
 }
 
 fn parse_number(rest: &str) -> Result<(u64, &str)> {
-    // figure out how many numbers we have
-
     let mut non_digit_index = rest.len();
 
     for (index, c) in rest.bytes().enumerate() {
-        match c {
-            b'0' | b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' => (),
-            _ => {
-                non_digit_index = index;
-                break;
-            }
+        if !matches!(c, b'0'..=b'9') {
+            non_digit_index = index;
+            break;
         }
     }
 
