@@ -1,5 +1,9 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(feature = "std")]
 use std::error::Error;
-use std::fmt;
+
+use core::fmt;
 
 #[derive(Debug, PartialEq)]
 pub struct Version {
@@ -8,7 +12,7 @@ pub struct Version {
     pub patch: u64,
 }
 
-type Result<T> = std::result::Result<T, ParseError>;
+type Result<T> = core::result::Result<T, ParseError>;
 
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
@@ -23,6 +27,7 @@ impl fmt::Display for ParseError {
     }
 }
 
+#[cfg(feature = "std")]
 impl Error for ParseError {}
 
 pub fn parse(input: &str) -> Result<Version> {
