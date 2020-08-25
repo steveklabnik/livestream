@@ -15,7 +15,7 @@ like to ask a question I didn't cover on stream, or influence what I decide
 to work on next.
 
 [stream]: https://www.twitch.tv/steveklabnik
-[stream-time]: https://everytimezone.com/?t=5f445480,537
+[stream-time]: https://everytimezone.com/?t=5f31df80,537
 [semver-crate]: https://crates.io/crates/semver
 [issues]: https://github.com/steveklabnik/livestream/issues
 
