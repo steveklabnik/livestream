@@ -21,5 +21,4 @@ to work on next.
 
 ## Current work
 
-I am currently [working on implementing caret
-ranges](https://github.com/steveklabnik/livestream/issues/2).
+I am currently working on implementing wildcard ranges.

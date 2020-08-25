@@ -95,6 +95,7 @@ impl From<ParseError> for Error {
 pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
     let (op, range) = parse_op(range).unwrap_or((Operation::Wildcard, range));
 
+    // this is wrong
     if let Operation::Wildcard = op {
         return Ok(true);
     }

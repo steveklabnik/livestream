@@ -29,4 +29,6 @@ fn basic_wildcard() {
     assert!(satisfies("1.2.3", "*").unwrap());
     assert!(satisfies("1.2.3", "1.*").unwrap());
     assert!(satisfies("1.2.3", "1.2.*").unwrap());
+
+    assert!(!satisfies("1.3.3", "1.2.*").unwrap());
 }
