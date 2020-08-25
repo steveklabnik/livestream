@@ -21,6 +21,7 @@ pub enum ParseError {
     ExpectedDot,
     LeadingZero,
     EmptyString,
+    ExpectedWildcard,
 }
 
 impl fmt::Display for ParseError {
@@ -64,6 +65,8 @@ pub fn parse(input: &str) -> Result<Version, ParseError> {
 enum Operation {
     Caret,
     Eq,
+    Tilde,
+    Wildcard,
 }
 
 #[derive(Debug)]
@@ -90,12 +93,22 @@ impl From<ParseError> for Error {
 }
 
 pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
-    let (op, range) = parse_op(range)?;
+    let (op, range) = parse_op(range).unwrap_or((Operation::Wildcard, range));
+
+    if let Operation::Wildcard = op {
+        return Ok(true);
+    }
 
     let (version_major, version) = parse_number(version)?;
     let version = parse_dot(version)?;
 
-    let (range_major, range) = parse_number(range)?;
+    let (range_major, range) = match parse_number(range) {
+        Ok(result) => result,
+        Err(_) => {
+            return Ok(parse_wildcard(range).is_ok());
+        }
+    };
+
     let range = parse_dot(range)?;
 
     match op {
@@ -103,11 +116,19 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
             if version_major != range_major {
                 return Ok(false);
             }
-        },
+        }
         Operation::Caret => {
             if version_major != range_major {
                 return Ok(false);
             }
+        }
+        Operation::Tilde => {
+            if version_major != range_major {
+                return Ok(false);
+            }
+        }
+        Operation::Wildcard => {
+            unreachable!();
         }
     }
 
@@ -122,11 +143,19 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
             if version_minor != range_minor {
                 return Ok(false);
             }
-        },
+        }
         Operation::Caret => {
             if version_minor < range_minor {
                 return Ok(false);
             }
+        }
+        Operation::Tilde => {
+            if version_minor != range_minor {
+                return Ok(false);
+            }
+        }
+        Operation::Wildcard => {
+            unreachable!();
         }
     }
 
@@ -138,24 +167,36 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
             if version_patch != range_patch {
                 return Ok(false);
             }
-        },
+        }
         Operation::Caret => {
             if version_patch < range_patch {
                 return Ok(false);
             }
+        }
+        Operation::Tilde => {
+            if version_patch < range_patch {
+                return Ok(false);
+            }
+        }
+        Operation::Wildcard => {
+            unreachable!();
         }
     }
 
     Ok(true)
 }
 
-fn parse_op(range: &str) -> Result<(Operation, &str), ParseRangeError> {
+fn parse_op(range: &str) -> Option<(Operation, &str)> {
     if range.starts_with("^") {
-        Ok((Operation::Caret, &range[1..]))
+        Some((Operation::Caret, &range[1..]))
     } else if range.starts_with("=") {
-        Ok((Operation::Eq, &range[1..]))
+        Some((Operation::Eq, &range[1..]))
+    } else if range.starts_with("~") {
+        Some((Operation::Tilde, &range[1..]))
+    } else if range.starts_with("*") {
+        Some((Operation::Wildcard, &range[1..]))
     } else {
-        Err(ParseRangeError::MalformedOperation)
+        None
     }
 }
 
@@ -186,6 +227,14 @@ fn parse_dot(rest: &str) -> Result<&str, ParseError> {
     }
 
     Err(ParseError::ExpectedDot)
+}
+
+fn parse_wildcard(rest: &str) -> Result<&str, ParseError> {
+    if rest.starts_with("*") {
+        return Ok(&rest[1..]);
+    }
+
+    Err(ParseError::ExpectedWildcard)
 }
 
 #[cfg(test)]
