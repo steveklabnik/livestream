@@ -104,7 +104,11 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
                 return Ok(false);
             }
         },
-        Operation::Caret => unimplemented!(),
+        Operation::Caret => {
+            if version_major != range_major {
+                return Ok(false);
+            }
+        }
     }
 
     let (version_minor, version) = parse_number(version)?;
@@ -119,7 +123,11 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
                 return Ok(false);
             }
         },
-        Operation::Caret => unimplemented!(),
+        Operation::Caret => {
+            if version_minor < range_minor {
+                return Ok(false);
+            }
+        }
     }
 
     let (version_patch, _version) = parse_number(version)?;
@@ -131,7 +139,11 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
                 return Ok(false);
             }
         },
-        Operation::Caret => unimplemented!(),
+        Operation::Caret => {
+            if version_patch < range_patch {
+                return Ok(false);
+            }
+        }
     }
 
     Ok(true)
