@@ -68,7 +68,9 @@ enum Operation {
     Tilde,
     Wildcard,
     GreaterThan,
+    GreaterThanEqual,
     LessThan,
+    LessThanEqual,
 }
 
 #[derive(Debug)]
@@ -134,8 +136,18 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
                 return Ok(true);
             }
         }
+        Operation::GreaterThanEqual => {
+            if version_major >= range_major {
+                return Ok(true);
+            }
+        }
         Operation::LessThan => {
             if version_major < range_major {
+                return Ok(true);
+            }
+        }
+        Operation::LessThanEqual => {
+            if version_major <= range_major {
                 return Ok(true);
             }
         }
@@ -176,8 +188,18 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
                 return Ok(true);
             }
         }
+        Operation::GreaterThanEqual => {
+            if version_minor >= range_minor {
+                return Ok(true);
+            }
+        }
         Operation::LessThan => {
             if version_minor < range_minor {
+                return Ok(true);
+            }
+        }
+        Operation::LessThanEqual => {
+            if version_minor <= range_minor {
                 return Ok(true);
             }
         }
@@ -215,8 +237,18 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
                 return Ok(false);
             }
         }
+        Operation::GreaterThanEqual => {
+            if version_patch < range_patch {
+                return Ok(false);
+            }
+        }
         Operation::LessThan => {
             if version_patch >= range_patch {
+                return Ok(false);
+            }
+        }
+        Operation::LessThanEqual => {
+            if version_patch > range_patch {
                 return Ok(false);
             }
         }
@@ -238,9 +270,17 @@ fn parse_op(range: &str) -> Option<(Operation, &str)> {
     } else if range.starts_with("*") {
         Some((Operation::Wildcard, &range[1..]))
     } else if range.starts_with(">") {
-        Some((Operation::GreaterThan, &range[1..]))
+        if range.starts_with(">=") {
+            Some((Operation::GreaterThanEqual, &range[2..]))
+        } else {
+            Some((Operation::GreaterThan, &range[1..]))
+        }
     } else if range.starts_with("<") {
-        Some((Operation::LessThan, &range[1..]))
+        if range.starts_with("<=") {
+            Some((Operation::LessThanEqual, &range[2..]))
+        } else {
+            Some((Operation::LessThan, &range[1..]))
+        }
     } else {
         None
     }
