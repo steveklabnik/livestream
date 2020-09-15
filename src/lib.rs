@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "std")]
-use std::error::Error;
+use std::error;
 
 use core::fmt;
 
@@ -31,7 +31,7 @@ impl fmt::Display for ParseError {
 }
 
 #[cfg(feature = "std")]
-impl Error for ParseError {}
+impl error::Error for ParseError {}
 
 pub fn parse(input: &str) -> Result<Version, ParseError> {
     if input.is_empty() {
