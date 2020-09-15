@@ -67,6 +67,8 @@ enum Operation {
     Eq,
     Tilde,
     Wildcard,
+    GreaterThan,
+    LessThan,
 }
 
 #[derive(Debug)]
@@ -127,6 +129,16 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
                 return Ok(false);
             }
         }
+        Operation::GreaterThan => {
+            if version_major > range_major {
+                return Ok(true);
+            }
+        }
+        Operation::LessThan => {
+            if version_major < range_major {
+                return Ok(true);
+            }
+        }
         Operation::Wildcard => {
             unreachable!();
         }
@@ -159,6 +171,16 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
                 return Ok(false);
             }
         }
+        Operation::GreaterThan => {
+            if version_minor > range_minor {
+                return Ok(true);
+            }
+        }
+        Operation::LessThan => {
+            if version_minor < range_minor {
+                return Ok(true);
+            }
+        }
         Operation::Wildcard => {
             unreachable!();
         }
@@ -188,6 +210,16 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
                 return Ok(false);
             }
         }
+        Operation::GreaterThan => {
+            if version_patch <= range_patch {
+                return Ok(false);
+            }
+        }
+        Operation::LessThan => {
+            if version_patch >= range_patch {
+                return Ok(false);
+            }
+        }
         Operation::Wildcard => {
             unreachable!();
         }
@@ -205,6 +237,10 @@ fn parse_op(range: &str) -> Option<(Operation, &str)> {
         Some((Operation::Tilde, &range[1..]))
     } else if range.starts_with("*") {
         Some((Operation::Wildcard, &range[1..]))
+    } else if range.starts_with(">") {
+        Some((Operation::GreaterThan, &range[1..]))
+    } else if range.starts_with("<") {
+        Some((Operation::LessThan, &range[1..]))
     } else {
         None
     }
