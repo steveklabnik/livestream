@@ -61,7 +61,7 @@ pub fn parse(input: &str) -> Result<Version, ParseError> {
     })
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 enum Operation {
     Caret,
     Eq,
