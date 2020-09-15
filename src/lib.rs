@@ -93,9 +93,8 @@ impl From<ParseError> for Error {
 }
 
 pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
-    let (op, range) = parse_op(range).unwrap_or((Operation::Wildcard, range));
+    let (op, range) = parse_op(range).unwrap_or((Operation::Caret, range));
 
-    // this is wrong
     if let Operation::Wildcard = op {
         return Ok(true);
     }
@@ -136,7 +135,12 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
     let (version_minor, version) = parse_number(version)?;
     let version = parse_dot(version)?;
 
-    let (range_minor, range) = parse_number(range)?;
+    let (range_minor, range) = match parse_number(range) {
+        Ok(result) => result,
+        Err(_) => {
+            return Ok(parse_wildcard(range).is_ok());
+        }
+    };
     let range = parse_dot(range)?;
 
     match op {
@@ -161,7 +165,12 @@ pub fn satisfies(version: &str, range: &str) -> Result<bool, Error> {
     }
 
     let (version_patch, _version) = parse_number(version)?;
-    let (range_patch, _range) = parse_number(range)?;
+    let (range_patch, _range) = match parse_number(range) {
+        Ok(result) => result,
+        Err(_) => {
+            return Ok(parse_wildcard(range).is_ok());
+        }
+    };
 
     match op {
         Operation::Eq => {
