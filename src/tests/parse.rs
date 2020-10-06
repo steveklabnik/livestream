@@ -48,6 +48,15 @@ fn basic_prerelease() {
 #[test]
 fn prerelease_numeric_identifiers() {
     assert!(parse("1.2.3-beta.0").is_ok());
+    assert!(parse("1.2.3-beta.00").is_err());
+    assert!(parse("1.2.3-beta.01").is_err());
+    assert!(parse("1.2.3-01").is_err());
+
+    // alphanumeric, not numeric, so leading zero is ok
+
+    // root cause is not keeping enough context on zeroes to know
+    // that we have only zeroes
+    assert!(parse("1.2.3-01a").is_ok());
 }
 
 #[test]

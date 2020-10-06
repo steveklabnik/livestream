@@ -85,6 +85,9 @@ fn parse_prerelease(input: &str) -> Result<(Option<&str>, &str), ParseError> {
     // skip the -
     let mut pos = 1;
     let mut start_of_identifier = true;
+    let mut identifier_pos = -1;
+    let mut starts_with_zero = false;
+    let mut all_numbers = true;
 
     // check for non-empty initial identifier
     if input[1..].len() == 0 {
@@ -97,11 +100,24 @@ fn parse_prerelease(input: &str) -> Result<(Option<&str>, &str), ParseError> {
             return Err(ParseError::InvalidPrerelease);
         }
 
+        identifier_pos += 1;
+
+        if byte == b'.' {
+            identifier_pos = -1;
+            starts_with_zero = false;
+            all_numbers = true;
+        } else if !matches!(byte, b'0'..=b'9') {
+            all_numbers = false;
+        }
+
         // if we're at the start of an identifier, we need to see if it is zero
         // in order to check for leading zeroes later.
         if start_of_identifier {
             start_of_identifier = false;
 
+            if byte == b'0' {
+                starts_with_zero = true;
+            }
 
             if byte == b'.' {
                 return Err(ParseError::InvalidPrerelease);
@@ -112,13 +128,16 @@ fn parse_prerelease(input: &str) -> Result<(Option<&str>, &str), ParseError> {
         // the next iteration.
         if byte == b'.' {
             start_of_identifier = true;
-
         }
 
         pos += 1;
     }
 
     if start_of_identifier {
+        return Err(ParseError::InvalidPrerelease);
+    }
+
+    if starts_with_zero && identifier_pos > 0 && all_numbers {
         return Err(ParseError::InvalidPrerelease);
     }
 
