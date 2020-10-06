@@ -22,6 +22,7 @@ pub enum ParseError {
     LeadingZero,
     EmptyString,
     ExpectedWildcard,
+    InvalidPrerelease,
 }
 
 impl fmt::Display for ParseError {
@@ -50,6 +51,8 @@ pub fn parse(input: &str) -> Result<Version, ParseError> {
 
     let (patch, rest) = parse_number(rest)?;
 
+    let (_prerelease, rest) = parse_prerelease(rest)?;
+
     if !rest.is_empty() {
         return Err(ParseError::ExtraInput);
     }
@@ -59,6 +62,67 @@ pub fn parse(input: &str) -> Result<Version, ParseError> {
         minor,
         patch,
     })
+}
+
+// A pre-release version MAY be denoted by appending a hyphen and a series of
+// dot separated identifiers immediately following the patch version.
+//
+// Identifiers MUST comprise only ASCII alphanumerics and hyphens [0-9A-Za-z-].
+//
+// Identifiers MUST NOT be empty. Numeric identifiers MUST NOT include leading
+// zeroes. Pre-release versions have a lower precedence than the associated
+// normal version. A pre-release version indicates that the version is unstable
+// and might not satisfy the intended compatibility requirements as denoted by
+// its associated normal version.
+//
+// Examples: 1.0.0-alpha, 1.0.0-alpha.1,
+// 1.0.0-0.3.7, 1.0.0-x.7.z.92, 1.0.0-x-y-z.–.
+fn parse_prerelease(input: &str) -> Result<(Option<&str>, &str), ParseError> {
+    if !input.starts_with('-') {
+        return Ok((None, input));
+    }
+
+    // skip the -
+    let mut pos = 1;
+    let mut start_of_identifier = true;
+
+    // check for non-empty initial identifier
+    if input[1..].len() == 0 {
+        return Err(ParseError::InvalidPrerelease);
+    }
+
+    for byte in input[1..].bytes() {
+        // is the character valid at all?
+        if !(matches!(byte, b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'-' | b'.')) {
+            return Err(ParseError::InvalidPrerelease);
+        }
+
+        // if we're at the start of an identifier, we need to see if it is zero
+        // in order to check for leading zeroes later.
+        if start_of_identifier {
+            start_of_identifier = false;
+
+
+            if byte == b'.' {
+                return Err(ParseError::InvalidPrerelease);
+            }
+        }
+
+        // if we are a ., then we're gonna be at the start of an identifier on
+        // the next iteration.
+        if byte == b'.' {
+            start_of_identifier = true;
+
+        }
+
+        pos += 1;
+    }
+
+    if start_of_identifier {
+        return Err(ParseError::InvalidPrerelease);
+    }
+
+    return Ok((None, &input[pos..]));
 }
 
 #[derive(Debug, PartialEq)]

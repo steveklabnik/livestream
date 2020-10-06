@@ -33,3 +33,26 @@ fn no_leading_zeroes() {
 fn empty_string() {
     assert_eq!(parse(""), Err(ParseError::EmptyString));
 }
+
+#[test]
+fn basic_prerelease() {
+    assert!(parse("1.2.3-pre").is_ok());
+
+    assert!(parse("1.0.0-alpha").is_ok());
+    assert!(parse("1.0.0-alpha.1").is_ok());
+    assert!(parse("1.0.0-0.3.7").is_ok());
+    assert!(parse("1.0.0-x.7.z.92").is_ok());
+    assert!(parse("1.0.0-x-y-z.-").is_ok());
+}
+
+#[test]
+fn prerelease_numeric_identifiers() {
+    assert!(parse("1.2.3-beta.0").is_ok());
+}
+
+#[test]
+fn prerelease_identifiers_must_not_be_empty() {
+    assert!(parse("1.2.3-foo..").is_err());
+    assert!(parse("1.2.3-").is_err());
+    assert!(parse("1.2.3-foo.").is_err());
+}
